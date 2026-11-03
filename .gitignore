@@ -102,3 +102,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Scooter API runtime data (SQLite DB + event log). See AGENTS.md.
+var/

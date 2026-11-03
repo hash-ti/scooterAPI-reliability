@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "scooter-ops": {
+      "command": "python",
+      "args": ["scripts/mcp_launch.py"]
+    }
+  }
+}

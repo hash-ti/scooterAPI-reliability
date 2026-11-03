@@ -1,4 +1,4 @@
-> **Tek Innov8rs Fall 2026:** this is a snapshot of a 2019 project, left as-is on purpose. Start with [ACTIVITY.md](ACTIVITY.md).
+> **Tek Innov8rs Fall 2026:** this started as a snapshot of a 2019 project ([ACTIVITY.md](ACTIVITY.md) is the brief). It has since been rebuilt to be debuggable by an agent: start with [AGENTS.md](AGENTS.md). Endpoints below are unchanged, but error status codes are now specific (see [docs/FAILURES.md](docs/FAILURES.md)) and every error body carries a stable `error.kind`.
 
 # Scooter Reservation API
 
@@ -10,15 +10,13 @@ The implementation of this app uses Python/Flask, with JSON as the database. The
 
 ### Setup
 
-#### On the web
-
-The API is live at https://scooter-reservation.herokuapp.com
-
 #### On local dev environment
 
 * Clone the repository
-* Run `python3 app.py`
+* `python -m venv .venv` and install `requirements.txt` into it (Python 3.10+)
+* Run `.venv/Scripts/python app.py` (Windows) or `.venv/bin/python app.py`
 * App will run on http://localhost:8080
+* Run the tests: `.venv/Scripts/python -m pytest` (or `.venv/bin/python -m pytest`)
 
 ## API Endpoints
 
@@ -49,8 +47,8 @@ None
 
 #### Error Responses:
 
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
+* **Code**: 4xx/5xx depending on the failure kind (422 for bad params, 404 unknown scooter, 409 conflicts, 402/502/504 payment) <br />
+  **Content**: JSON object with a `msg` property, and an `error` object with `kind`, `message`, `retryable` and `details`. See [docs/FAILURES.md](docs/FAILURES.md).
 
 ### Search for Scooters 
 
@@ -81,8 +79,8 @@ GET /search
 
 #### Error Responses:
 
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
+* **Code**: 4xx/5xx depending on the failure kind (422 for bad params, 404 unknown scooter, 409 conflicts, 402/502/504 payment) <br />
+  **Content**: JSON object with a `msg` property, and an `error` object with `kind`, `message`, `retryable` and `details`. See [docs/FAILURES.md](docs/FAILURES.md).
 
 
 ### Reserve a Scooter
@@ -106,8 +104,8 @@ GET /reservation/start
 
 #### Error Responses:
 
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
+* **Code**: 4xx/5xx depending on the failure kind (422 for bad params, 404 unknown scooter, 409 conflicts, 402/502/504 payment) <br />
+  **Content**: JSON object with a `msg` property, and an `error` object with `kind`, `message`, `retryable` and `details`. See [docs/FAILURES.md](docs/FAILURES.md).
 
 
 ### End Reservation for a Scooter
@@ -138,5 +136,5 @@ GET /reservation/end
 
 #### Error Responses:
 
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
+* **Code**: 4xx/5xx depending on the failure kind (422 for bad params, 404 unknown scooter, 409 conflicts, 402/502/504 payment) <br />
+  **Content**: JSON object with a `msg` property, and an `error` object with `kind`, `message`, `retryable` and `details`. See [docs/FAILURES.md](docs/FAILURES.md).
