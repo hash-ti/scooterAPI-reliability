@@ -30,6 +30,12 @@ These first entries come from the build session (Claude Code, Nov 2026). Add you
 **Fix:** Test deleted. The fix commit says existing tests cover the bug.
 **Lesson:** "write the failing test" means make sure a failing test exists. First run the suite against the bug. If existing tests already fail for the right reason, cite them instead of adding a duplicate. Also read this file: the answer was already in entry 3.
 
+### 6. Gave wrong bug-planting instructions from memory (rehearsal prep, 2026-11-09)
+**What the AI did:** Told the user that planting the "still reserved" bug meant deleting `is_reserved = 0, ` from the UPDATE in `_finish_ride` *and* removing "the first `?` value in that line's tuple so the counts still match." But `is_reserved = 0` is a literal, not a placeholder. Following the instruction would have left 4 `?` and 3 values, so every end-ride would crash with a SQLite binding error, not the intended symptom.
+**How it was caught:** The user said they didn't understand the sentence. The AI then grepped the actual line (`service.py:174`) and saw the tuple needs no change.
+**Fix:** Corrected the instructions: only the SQL string changes.
+**Lesson:** Before telling someone exactly what to edit, open the line. An instruction can be confidently wrong in a way that plants a different bug than intended.
+
 <!-- Template for new entries:
 ### N. <one-line summary>
 **What the AI did:**
