@@ -18,6 +18,18 @@ These first entries come from the build session (Claude Code, Nov 2026). Add you
 **How it was caught:** Re-reading the test file after the suite went green on the first run (49/49 passing on the first try is a smell). Deleted it. Then mutation-checked the suite by planting the activity's example bug (removing `is_reserved = 0` from the ride-release UPDATE): 11 tests failed and `cli invariants` flagged scooter 18, so the real tests do bite.
 **Lesson:** a green first run proves nothing until you have seen the suite fail for a planted bug.
 
+### 4. Claimed every test failed for the same reason without reading them (bug-1 session, 2026-11-09)
+**What the AI did:** While fixing "scooter 18 still reserved after ending the ride" (bug `e7d46ff`, fix `2da16d9`), it ran `pytest | tail -20`. That showed one full traceback (`is_reserved` `1 == 0`) and 11 truncated summary lines. It then told the user "12 tests failed on exactly this".
+**How it was caught:** The user asked what that sentence meant. Asked to explain, the AI admitted it had only inferred the cause, because restoring one line made all 12 pass. It re-planted the bug and ran `pytest --tb=line`. All 12 failures were the stuck-reservation symptom: 8 direct `is_reserved`/event assertions and 4 `reserved_iff_one_active_ride` invariant violations. So the claim was true, but it had not been checked when it was made.
+**Fix:** None needed to the code. The claim was verified after the fact.
+**Lesson:** "they all pass after the fix" does not show why each one failed. Read every failure (`--tb=line`) before saying what they have in common.
+
+### 5. Added a regression test that duplicated an existing one (bug-1 session, 2026-11-09)
+**What the AI did:** Following AGENTS.md §5 ("write the failing test"), it added `test_ended_scooter_is_available_again` before checking existing coverage. The test made the same start/end calls on scooter 18 as `test_full_ride_charges_and_moves_scooter`. Its extra checks (listed in `/view_all_available`, reservable again) depended only on `is_reserved`. That is already asserted there, and re-reserving is already covered by `test_decline_releases_scooter_and_charges_nothing`. Entry 3 above had already recorded that this exact planted bug fails 11 existing tests.
+**How it was caught:** The user asked whether the test was necessary. Comparing it with the existing tests showed it added nothing, so it was removed before committing.
+**Fix:** Test deleted. The fix commit says existing tests cover the bug.
+**Lesson:** "write the failing test" means make sure a failing test exists. First run the suite against the bug. If existing tests already fail for the right reason, cite them instead of adding a duplicate. Also read this file: the answer was already in entry 3.
+
 <!-- Template for new entries:
 ### N. <one-line summary>
 **What the AI did:**
