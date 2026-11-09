@@ -57,6 +57,8 @@ def test_full_ride_charges_and_moves_scooter(api, state, assert_consistent):
     assert (s["state"]["lat"], s["state"]["lng"]) == (23.01, 19.0)
     assert [r["status"] for r in s["rides"]] == ["completed"]
     assert [c["txn_id"] for c in s["gateway_charges"]] == [body["txn_id"]]
+    # What the gateway actually charged, not just what the app reported.
+    assert [c["amount_cents"] for c in s["gateway_charges"]] == [body["distance_m"]]
     assert_consistent()
 
 

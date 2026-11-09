@@ -36,6 +36,12 @@ These first entries come from the build session (Claude Code, Nov 2026). Add you
 **Fix:** Corrected the instructions: only the SQL string changes.
 **Lesson:** Before telling someone exactly what to edit, open the line. An instruction can be confidently wrong in a way that plants a different bug than intended.
 
+### 7. Repeated entry 5: added a duplicate regression test (bug-2 session, 2026-11-09)
+**What the AI did:** While fixing "charged way too much for a short ride on scooter 18" (an uncommitted `* 100` in `calculate_cost`; ride `ride_36bcb9130f15` was charged 109600 cents for 1096 m), it added `test_short_ride_charges_one_cent_per_metre`. It ran the suite and saw that `test_full_ride_charges_and_moves_scooter` *also* failed on `cost_cents == distance_m`, but kept the new test anyway and did not mention the overlap. The only new thing in the test was a check of the gateway's `amount_cents`. Replaying the exact short ride added nothing, because the cost does not depend on ride history.
+**How it was caught:** The user asked why the test was needed if the existing one already failed.
+**Fix:** Deleted the duplicate test. Added the one useful assertion (gateway `amount_cents == distance_m`) to `test_full_ride_charges_and_moves_scooter`. Verified that it catches the bug on its own: with the bug re-planted and the existing cost assertion disabled, the new line still failed.
+**Lesson:** Entry 5 already said this, and the AI did not read this file before starting. Read AI_NOTES.md at the start of every debugging task. Strengthening an existing test (adding assertions, never loosening them) is fine. Check that the added assertion fails on the bug by itself.
+
 <!-- Template for new entries:
 ### N. <one-line summary>
 **What the AI did:**
