@@ -31,6 +31,57 @@ def test_decline_releases_scooter_and_charges_nothing(api, state, assert_consist
     assert api("/reservation/start?id=18")[0] == 200
 
 
+def test_decline_ends_ride_at_end_location(api, state):
+    reserve(api)
+    _, _, request_id = api(END, fault="payment=decline")
+
+    s = state("18")
+    assert (s["state"]["lat"], s["state"]["lng"]) == (23.01, 19.0), "scooter is released where the ride ended"
+    ride = s["rides"][0]
+    assert (ride["end_lat"], ride["end_lng"]) == (23.01, 19.0)
+    assert ride["distance_m"] > 1000 and ride["cost_cents"] == ride["distance_m"]
+    assert ride["txn_id"] is None
+    assert ride["ended_at"] is not None and ride["end_request_id"] == request_id
+
+
+def test_decline_records_state_changes(api, state):
+    ride_id = reserve(api)
+    _, _, request_id = api(END, fault="payment=decline")
+
+    evs = [e for e in state("18")["events"] if e["request_id"] == request_id]
+    types = [e["type"] for e in evs]
+    assert types.index("payment.declined") < types.index("ride.state_changed") < types.index("scooter.state_changed")
+    ride_change = next(e for e in evs if e["type"] == "ride.state_changed")
+    assert ride_change["ride_id"] == ride_id
+    assert (ride_change["data"]["from"], ride_change["data"]["to"]) == ("active", "payment_failed")
+    scooter_change = next(e for e in evs if e["type"] == "scooter.state_changed")
+    assert scooter_change["data"]["to"] == {"is_reserved": False, "lat": 23.01, "lng": 19.0}
+
+
+def test_retry_after_decline_is_rejected_and_not_charged(api, state, assert_consistent):
+    reserve(api)
+    api(END, fault="payment=decline")
+    status, body, _ = api(END)
+    assert status == 409, f"a declined ride must not be endable (and chargeable) again, got {status}: {body}"
+    assert body["error"]["kind"] == "RIDE_NOT_ACTIVE"
+    assert body["error"]["details"]["last_ride"]["status"] == "payment_failed"
+    assert state("18")["gateway_charges"] == []
+    assert_consistent()
+
+
+def test_decline_after_timeout_still_ends_ride(api, state, assert_consistent):
+    ride_id = reserve(api)
+    assert api(END, fault="payment=timeout_before_charge")[0] == 504
+    status, body, _ = api(END, fault="payment=decline")
+    assert (status, body["error"]["kind"]) == (402, "PAYMENT_DECLINED")
+
+    s = state("18")
+    assert s["state"]["is_reserved"] == 0 and s["active_rides"] == []
+    assert s["rides"][0]["id"] == ride_id and s["rides"][0]["status"] == "payment_failed"
+    assert s["gateway_charges"] == []
+    assert_consistent()
+
+
 def test_timeout_before_charge_keeps_ride_active_then_retry_charges_once(api, state, assert_consistent):
     reserve(api)
     status, body, _ = api(END, fault="payment=timeout_before_charge")
